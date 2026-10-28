@@ -1,0 +1,39 @@
+git --version
+git config --global user.name "Your Name"
+git config --global user.email "your-email@example.com"
+git config --global --list
+
+mkdir git-practical
+cd git-practical
+git init
+"Hello Git" | Out-File -Encoding utf8 README.md
+git status
+
+git add README.md
+git status
+git commit -m "Initial commit"
+git log --oneline
+
+git remote add origin https://github.com/USERNAME/REPOSITORY.git
+git remote -v
+git branch -M main
+git push -u origin main
+
+git add .
+git commit -m "Update project"
+git push
+
+git branch
+git branch feature-branch
+git switch feature-branch
+
+git add .
+git commit -m "Add feature"
+git switch main
+git merge feature-branch
+git push
+
+git fetch origin
+git pull origin main
+git log --oneline --graph --all
+git status

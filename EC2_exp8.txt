@@ -1,0 +1,139 @@
+1. Requirements
+- AWS account
+- AWS Lambda
+- Amazon DynamoDB
+- Python runtime
+- IAM execution role
+Our practical uses AWS region ap-southeast-2 (Sydney).
+2. Create the DynamoDB table
+1. Open the AWS Management Console.
+2. Search for DynamoDB.
+3. Select Tables → Create table.
+4. Enter these details:
+Setting	Value
+Table name	DateTimeTable
+Partition key	recordId
+Key type	String
+Region	ap-southeast-2
+
+5. Click Create table.
+
+The partition key uniquely identifies each record.
+3. Create the Lambda function
+1. Open AWS Lambda.
+2. Click Create function.
+3. Select Author from scratch.
+4. Enter the following details:
+Setting	Value
+Function name	StoreDateTimeFunction
+Runtime	Python
+Architecture	Default
+Execution role	Select a suitable IAM role
+
+5. Click Create function.
+4. Configure IAM permissions
+Lambda needs permission to insert items into DynamoDB.
+1. Open your Lambda function.
+2. Select Configuration → Permissions.
+3. Click the execution role.
+4. Add a policy allowing dynamodb:PutItem on the DateTimeTable ARN in ap-southeast-2.
+Example policy document:
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "dynamodb:PutItem",
+      "Resource": "arn:aws:dynamodb:ap-southeast-2:YOUR_ACCOUNT_ID:table/DateTimeTable"
+    }
+  ]
+}
+
+
+Replace YOUR_ACCOUNT_ID with your AWS account ID.
+
+Important: The role needs this permission in addition to the normal Lambda execution permissions, such as writing CloudWatch logs.
+5. Write the Lambda function
+Open the Lambda Code tab. Replace the code with the following:
+
+import json
+import uuid
+import boto3
+from datetime import datetime, timezone
+
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("DateTimeTable")
+
+
+def lambda_handler(event, context):
+    try:
+        current_time = datetime.now(timezone.utc).isoformat()
+
+        item = {
+            "recordId": str(uuid.uuid4()),
+            "date": current_time[:10],
+            "time": current_time[11:19],
+            "timestamp": current_time
+        }
+
+        table.put_item(Item=item)
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message": "Date and time stored successfully",
+                "recordId": item["recordId"],
+                "timestamp": item["timestamp"]
+            })
+        }
+
+    except Exception as e:
+        print(f"Error storing date and time: {e}")
+
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                "message": "Failed to store date and time"
+            })
+        }
+
+Click Deploy to save the code.
+Understanding the code
+- boto3 connects Python to AWS services.
+- datetime.now(timezone.utc) obtains the current UTC date and time.
+- uuid.uuid4() generates a unique record ID.
+- table.put_item() inserts the record into DynamoDB.
+- json.dumps() converts the response data into JSON.
+6. Create a Lambda test event
+1. Open the Test tab.
+2. Click Create new event.
+3. Enter an event name, such as DateTimeTest.
+4. Use this JSON event:
+{}
+
+
+5. Save the event.
+6. Click Test.
+No additional Python packages need to be installed for this function because the Lambda Python runtime provides boto3.
+7. Verify the output
+If successful, the response should contain:
+{
+  "statusCode": 200,
+  "body": "{\"message\": \"Date and time stored successfully\", ...}"
+}
+
+
+The actual response will include a generated record ID and timestamp.
+8. Verify the DynamoDB table
+1. Open DynamoDB.
+2. Select DateTimeTable.
+3. Click Explore table items.
+4. Refresh the items view if necessary.
+You should see fields similar to these:
+Attribute	Example
+recordId	A generated UUID
+date	2026-10-29
+time	18:45:30
+timestamp	2026-10-29T18:45:30.123456+00:00
+
+The values above are illustrative; the function stores the actual execution time in UTC.

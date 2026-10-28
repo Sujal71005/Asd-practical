@@ -1,0 +1,130 @@
+2. Create an Agile project in Jira
+1. Log in to Jira.
+2. Select Projects → Create project.
+3. Choose a Scrum or Kanban template.
+4. Enter a project name, for example:
+Ecommerce Web Application
+
+
+5. Create the project.
+Create tasks in Jira
+Add sample tasks to your project:
+Task	Description
+Requirement Analysis	Identify project requirements
+Design UI	Create the web page design
+Develop Application	Implement the application
+Test Application	Test functionality
+Deploy Application	Deploy the completed application
+
+Move tasks through the workflow, such as:
+To Do → In Progress → Done
+
+
+This represents the Agile workflow.
+3. Create a GitHub repository
+Create a new repository on GitHub.
+
+Example repository name:
+agile-ecommerce-project
+
+
+Open PowerShell and create a local project:
+mkdir agile-ecommerce-project
+cd agile-ecommerce-project
+git init
+
+
+Create a sample index.html:
+<!doctype html>
+<html>
+<head>
+    <title>Agile Project</title>
+</head>
+<body>
+    <h1>Welcome to Our E-commerce Website</h1>
+    <p>Project developed using the Agile lifecycle.</p>
+</body>
+</html>
+
+
+Stage and commit the code:
+git add .
+git commit -m "Initial project setup"
+
+
+Connect the local repository to GitHub. Replace the URL with your actual repository URL:
+git branch -M main
+git remote add origin https://github.com/USERNAME/agile-ecommerce-project.git
+git push -u origin main
+
+
+Verify that your code appears in GitHub.
+4. Demonstrate Agile development with Git
+Make a change to index.html, then commit it:
+git add .
+git commit -m "Update homepage"
+git push origin main
+
+
+Use Git branches to work on new features:
+git branch feature-page
+git switch feature-page
+
+
+After making changes:
+git add .
+git commit -m "Add feature page"
+git switch main
+git merge feature-page
+git push origin main
+
+
+You can link GitHub commits or pull requests to the relevant Jira tasks to track development progress.
+5. Deploy the application on AWS
+For a simple demonstration, you can use an EC2 instance. This is a reference deployment approach; it assumes you have an AWS account and suitable permissions.
+Step A: Launch an EC2 instance
+1. Open AWS Console.
+2. Navigate to EC2 → Launch instance.
+3. Select an Ubuntu AMI.
+4. Select an appropriate instance type.
+5. Configure a key pair if SSH access is required.
+6. Configure the security group to allow HTTP traffic on port 80.
+7. Launch the instance.
+Restrict SSH access to your own IP address rather than allowing it from everywhere.
+Step B: Connect to the instance
+From a terminal with SSH available:
+ssh -i "your-key.pem" ubuntu@YOUR_EC2_PUBLIC_IP
+
+
+Replace the key filename and IP with your actual values.
+Step C: Install the web server
+On the Ubuntu EC2 instance:
+sudo apt update
+sudo apt install -y nginx
+
+
+Step D: Deploy the HTML page
+Create the web page:
+sudo nano /var/www/html/index.html
+
+
+Paste your HTML content, save the file, and exit the editor.
+
+Check that Nginx is running:
+sudo systemctl status nginx
+
+
+Open this URL in your browser:
+http://YOUR_EC2_PUBLIC_IP
+
+
+You should see your deployed web page.
+6. Track the lifecycle in Jira
+Update Jira tasks as you progress:
+1. Requirement Analysis → Done.
+2. Design UI → Done.
+3. Develop Application → Done.
+4. Test Application → Done after testing.
+5. Deploy Application → Done after deployment verification.
+The tasks and status changes demonstrate the Agile lifecycle.
+

@@ -1,0 +1,115 @@
+Jenkinsfile
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking source code'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building the project'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Testing the project'
+            }
+        }
+    }
+}
+
+#for rename
+Rename-Item .\Jenkinsfile.txt Jenkinsfile
+
+
+Important: The filename must be Jenkinsfile, not Jenkinsfile.txt.
+
+If Windows saves it with .txt, rename it using PowerShell:
+Rename-Item .\Jenkinsfile.txt Jenkinsfile
+
+
+3. Push the Jenkinsfile to GitHub
+Open PowerShell or the terminal inside your repository.
+
+Check the current directory and repository status:
+git status
+
+
+Stage and commit the Jenkinsfile:
+git add Jenkinsfile
+git commit -m "Add Jenkins pipeline"
+
+
+Push it to GitHub:
+git push origin main
+
+
+If you haven't configured a Git remote yet, use your actual repository URL:
+git remote add origin https://github.com/USERNAME/REPOSITORY.git
+git branch -M main
+git push -u origin main
+
+
+Don't add the remote again if it is already configured.
+4. Create a Jenkins job
+Follow these steps in the Jenkins UI:
+1. Open Jenkins.
+2. Click New Item.
+3. Enter the job name:
+   
+   GitHub-CI-Practical
+4. Select Pipeline.
+5. Click OK.
+6. Scroll to the Pipeline section.
+7. For Definition, select Pipeline script from SCM.
+8. For SCM, select Git.
+9. Enter your GitHub repository URL.
+10. Set the branch specifier to:
+*/main
+
+
+11. Set Script Path to:
+Jenkinsfile
+
+
+5. Configure Poll SCM
+Under Build Triggers, enable Poll SCM.
+
+Enter this schedule:
+H/5 * * * *
+
+
+Meaning:
+- H/5 — poll at intervals of approximately five minutes.
+- * — every hour.
+- * — every day of the month.
+- * — every month.
+- * — every day of the week.
+Click Save.
+6. Run the pipeline
+1. Open the GitHub-CI-Practical job.
+2. Click Build Now.
+3. Open the build from Build History.
+4. Click Console Output.
+You should see messages similar to:
+Checking source code
+Building the project
+Testing the project
+Finished: SUCCESS
+
+
+7. Test automatic polling
+Make a change to your Jenkinsfile or another tracked file.
+
+For example, change the Build stage message, then run:
+git add .
+git commit -m "Test Jenkins polling"
+git push origin main
+
+
+Wait for Jenkins to poll the repository. Open the job and verify that a new build starts and succeeds.

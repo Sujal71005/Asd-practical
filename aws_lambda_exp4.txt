@@ -1,0 +1,226 @@
+1. Create a DynamoDB table
+1. Log in to the AWS Management Console.
+2. Search for DynamoDB.
+3. Open Tables → Create table.
+4. Enter these details:
+Setting	Value
+Table name	RegistrationTable
+Partition key	registrationId
+Key type	String
+Region	ap-southeast-2 (Sydney)
+
+5. Click Create table.
+2. Create an AWS Lambda function
+1. Search for Lambda in the AWS Console.
+2. Click Create function.
+3. Select Author from scratch.
+4. Enter:
+Setting	Value
+Function name	RegistrationFunction
+Runtime	Python
+Architecture	Default
+Execution role	Create or select a suitable role
+
+5. Click Create function.
+3. Give Lambda permission to write to DynamoDB
+The Lambda execution role must have permission to write items to RegistrationTable.
+1. Open the function's Configuration → Permissions.
+2. Click the execution role.
+3. In IAM, add a policy allowing dynamodb:PutItem on the RegistrationTable ARN in your AWS region.
+For a practical, you can attach an appropriate custom policy scoped to that table. Avoid granting unnecessary permissions.
+4. Add the Lambda code
+Open the Lambda Code tab, replace the code with the following, and click Deploy.
+
+import json
+import uuid
+import boto3
+from datetime import datetime, timezone
+
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("RegistrationTable")
+
+
+def lambda_handler(event, context):
+    try:
+        method = (
+            event.get("requestContext", {})
+                 .get("http", {})
+                 .get("method")
+        )
+
+        # Handle browser CORS preflight
+        if method == "OPTIONS":
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST",
+                    "Access-Control-Allow-Headers": "content-type"
+                },
+                "body": ""
+            }
+
+        body = event.get("body", event)
+
+        if isinstance(body, str):
+            body = json.loads(body)
+
+        name = body.get("name")
+        email = body.get("email")
+
+        if not name or not email:
+            return {
+                "statusCode": 400,
+                "headers": {
+                    "Access-Control-Allow-Origin": "*"
+                },
+                "body": json.dumps({
+                    "message": "Name and email are required"
+                })
+            }
+
+        item = {
+            "registrationId": str(uuid.uuid4()),
+            "name": name,
+            "email": email,
+            "registeredAt": datetime.now(
+                timezone.utc
+            ).isoformat()
+        }
+
+        table.put_item(Item=item)
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Content-Type": "application/json"
+            },
+            "body": json.dumps({
+                "message": "Registration successful",
+                "registrationId": item["registrationId"]
+            })
+        }
+
+    except Exception:
+        print("Registration failed; check the Lambda logs.")
+        return {
+            "statusCode": 500,
+            "headers": {
+                "Access-Control-Allow-Origin": "*"
+            },
+            "body": json.dumps({
+                "message": "Registration failed"
+            })
+        }
+
+5. Create an API Gateway API
+1. Search for API Gateway in the AWS Console.
+2. Select Create API → HTTP API.
+3. Add an integration with your Lambda function, RegistrationFunction.
+4. Create the route:
+POST /register
+
+
+5. Deploy the API.
+6. Configure CORS to allow the origin where your form is hosted, the POST and OPTIONS methods, and the content-type header.
+Copy the API invoke URL. Your final registration endpoint will look like this:
+https://YOUR_API_ID.execute-api.ap-southeast-2.amazonaws.com/register
+
+
+Our earlier practical used this endpoint:
+https://zfxustx78j.execute-api.ap-southeast-2.amazonaws.com/register
+
+
+Use that URL only if your original API still exists.
+6. Create the registration form
+Create a folder named registration-form and save the following as index.html.
+
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Registration Form</title>
+</head>
+<body>
+    <h1>Student Registration Form</h1>
+
+    <form id="registrationForm">
+        <label>
+            Name:
+            <input id="name" required>
+        </label>
+        <br><br>
+
+        <label>
+            Email:
+            <input id="email" type="email" required>
+        </label>
+        <br><br>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p id="message"></p>
+
+    <script>
+        const API_URL =
+            "PASTE_YOUR_API_URL_HERE/register";
+
+        document.getElementById("registrationForm")
+            .addEventListener("submit", async (event) => {
+                event.preventDefault();
+
+                const message =
+                    document.getElementById("message");
+
+                try {
+                    const response = await fetch(API_URL, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            name: document.getElementById("name").value,
+                            email: document.getElementById("email").value
+                        })
+                    });
+
+                    const result = await response.json();
+                    message.textContent =
+                        result.message || "Request completed";
+                } catch (error) {
+                    message.textContent =
+                        "Request failed. Check API URL and CORS.";
+                }
+            });
+    </script>
+</body>
+</html>
+
+Replace PASTE_YOUR_API_URL_HERE with your API's invoke URL, without /register at the end. The code adds /register itself.
+
+7. Run the form using PowerShell
+Navigate to the folder containing index.html.
+cd registration-form
+py -m http.server 8000
+
+
+Open the form in your browser:
+http://localhost:8000/
+
+
+Enter a name and email, then click Register.
+
+Keep the PowerShell server running while you test the form.
+8. Verify the stored data
+In AWS Console:
+1. Open DynamoDB.
+2. Select RegistrationTable.
+3. Click Explore table items.
+4. Confirm that the new registration appears.
+The item should contain:
+- registrationId
+- name
+- email
+- registeredAt

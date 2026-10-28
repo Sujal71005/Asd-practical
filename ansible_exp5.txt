@@ -1,0 +1,100 @@
+2. Install Ansible
+Update the package list:
+sudo apt update
+
+
+Install Ansible:
+sudo apt install -y ansible
+
+
+Verify the installation:
+ansible --version
+
+
+3. Create a project directory
+mkdir -p ~/ansiblePractical
+cd ~/ansiblePractical
+
+
+4. Create the inventory file
+The inventory specifies which machines Ansible will manage. For this practical, we'll use the local machine.
+
+Run:
+cat > inventory.ini <<'EOF'
+[local]
+localhost ansible_connection=local
+EOF
+
+
+Verify the file:
+cat inventory.ini
+
+
+Expected content:
+[local]
+localhost ansible_connection=local
+
+
+5. Create the Ansible playbook
+A playbook contains the tasks Ansible should execute.
+
+Run:
+cat > playbook.yml <<'EOF'
+---
+- name: Configure local machine
+  hosts: local
+  become: yes
+
+  tasks:
+    - name: Install cowsay package
+      apt:
+        name: cowsay
+        state: present
+        update_cache: yes
+
+    - name: Display configuration message
+      debug:
+        msg: "Ansible configuration completed successfully!"
+EOF
+
+
+Verify the file:
+cat playbook.yml
+
+
+6. Check inventory and syntax
+Check whether Ansible recognizes the inventory:
+ansible-inventory -i inventory.ini --list
+
+
+Check the playbook syntax:
+ansible-playbook -i inventory.ini playbook.yml --syntax-check
+
+
+Expected result:
+playbook: playbook.yml
+
+
+7. Execute the playbook
+Run:
+ansible-playbook -i inventory.ini playbook.yml
+
+
+Ansible will:
+1. Connect to localhost.
+2. Install cowsay if it isn't already installed.
+3. Display the configuration success message.
+Because the playbook uses become: yes, Ansible may request your Ubuntu password for administrative privileges.
+8. Verify the installation
+Run:
+cowsay "Ansible is working!"
+
+
+You should see the message displayed inside an ASCII cow.
+
+Check the play recap. A successful run should show:
+unreachable=0
+failed=0
+
+
+The changed count may be zero if the package was already installed.
